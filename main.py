@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
 from logic.crop_logic import recommend_crop, get_crop_details
-from logic.nutrition_logic import nutrition_plan
+from logic.nutrition_logic import nutrition_plan, get_food_details
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables from .env file
@@ -57,6 +57,7 @@ class ConsumerInput(BaseModel):
     diet: str
     limit: int = 4
 
+
 class CropDetailsInput(BaseModel):
     crop_name: str
     temperature: float
@@ -67,6 +68,15 @@ class CropDetailsInput(BaseModel):
     phosphorous: float
     potassium: float
 
+
+class FoodDetailsInput(BaseModel):
+    food_name: str
+    age: int
+    bmi: float
+    condition: str
+    diet: str
+
+
 @app.get("/")
 def root():
     return {"message": "NutriGrow AI backend is running"}
@@ -76,10 +86,17 @@ def root():
 def crop_recommendation(data: FarmerInput):
     return recommend_crop(data.dict())
 
+
 @app.post("/crop-details")
 def crop_details(data: CropDetailsInput):
     return get_crop_details(data.dict())
 
+
 @app.post("/nutrition-plan")
 def nutrition_recommendation(data: ConsumerInput):
     return nutrition_plan(data.dict())
+
+
+@app.post("/food-details")
+def food_details(data: FoodDetailsInput):
+    return get_food_details(data.dict())
