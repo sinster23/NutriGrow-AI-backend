@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from logic.crop_logic import recommend_crop, get_crop_details
 from logic.nutrition_logic import nutrition_plan, get_food_details
+from logic.nutrition_advisory import get_regional_nutrition_advisory
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables from .env file
@@ -76,6 +77,9 @@ class FoodDetailsInput(BaseModel):
     condition: str
     diet: str
 
+class RegionInput(BaseModel):
+    region: str
+
 
 @app.get("/")
 def root():
@@ -100,3 +104,8 @@ def nutrition_recommendation(data: ConsumerInput):
 @app.post("/food-details")
 def food_details(data: FoodDetailsInput):
     return get_food_details(data.dict())
+
+@app.post("/region-nutrition-advisory")
+def region_nutrition_advisory(data: RegionInput):
+    """Get nutrition advisory for a specific region"""
+    return get_regional_nutrition_advisory(data.region)
