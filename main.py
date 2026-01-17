@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from logic.crop_logic import recommend_crop, get_crop_details
 from logic.nutrition_logic import nutrition_plan, get_food_details
 from logic.nutrition_advisory import get_regional_nutrition_advisory
+from logic.ask_ai_logic import handle_ai_question
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables from .env file
@@ -77,8 +78,14 @@ class FoodDetailsInput(BaseModel):
     condition: str
     diet: str
 
+
 class RegionInput(BaseModel):
     region: str
+
+
+class AskAIInput(BaseModel):
+    question: str
+    context: dict
 
 
 @app.get("/")
@@ -105,7 +112,23 @@ def nutrition_recommendation(data: ConsumerInput):
 def food_details(data: FoodDetailsInput):
     return get_food_details(data.dict())
 
+
 @app.post("/region-nutrition-advisory")
 def region_nutrition_advisory(data: RegionInput):
     """Get nutrition advisory for a specific region"""
     return get_regional_nutrition_advisory(data.region)
+
+
+@app.post("/ask-ai")
+def ask_ai(data: AskAIInput):
+    """
+    Natural language AI question handler.
+    
+    Accepts questions like:
+    - "What crops should I grow to reduce iron deficiency?"
+    - "What foods are good for anemia?"
+    - "Why is rice good for my region?"
+    
+    Returns friendly, conversational responses.
+    """
+    return handle_ai_question(data.question, data.context)
