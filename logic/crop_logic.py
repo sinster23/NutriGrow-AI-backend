@@ -4,6 +4,112 @@ df = pd.read_csv("data/farmer_data.csv")
 df.columns = df.columns.str.strip()
 
 
+def calculate_diversity_score(recommended_crops):
+    """
+    Calculate crop diversity score based on recommended crops
+    
+    Args:
+        recommended_crops: List of crop names
+        
+    Returns:
+        dict with diversity analysis
+    """
+    unique_crops = len(set(recommended_crops))
+    total_crops = len(recommended_crops)
+    
+    # Determine diversity level
+    if unique_crops == 1:
+        level = "LOW"
+        message = "You are over-dependent on a single crop. Increasing crop diversity can improve soil health, reduce income risk, and enhance nutrition outcomes."
+        recommendation = "Consider adding 2-3 different crops from other categories (pulses, oilseeds, vegetables) to diversify."
+    elif unique_crops == 2:
+        level = "MEDIUM"
+        message = "Moderate crop diversity detected. Adding one more crop type would improve resilience."
+        recommendation = "Consider adding a legume crop to fix nitrogen and improve soil health."
+    else:
+        level = "HIGH"
+        message = "Good crop diversity improves nutrition outcomes, climate resilience, and soil health."
+        recommendation = "Maintain this diversity pattern and consider crop rotation for optimal soil health."
+    
+    # Calculate crop category diversity (optional enhancement)
+    crop_categories = categorize_crops([c.lower() for c in recommended_crops])
+    unique_categories = len(set(crop_categories.values()))
+    
+    return {
+        "level": level,
+        "unique_crops": unique_crops,
+        "total_recommendations": total_crops,
+        "diversity_percentage": round((unique_crops / total_crops) * 100, 1),
+        "unique_categories": unique_categories,
+        "message": message,
+        "recommendation": recommendation,
+        "benefits": get_diversity_benefits(level)
+    }
+
+
+def categorize_crops(crop_names):
+    """
+    Categorize crops into groups for enhanced diversity analysis
+    
+    Returns:
+        dict mapping crop_name -> category
+    """
+    categories = {
+        # Cereals
+        'rice': 'Cereal', 'paddy': 'Cereal', 'wheat': 'Cereal', 'maize': 'Cereal',
+        'corn': 'Cereal', 'barley': 'Cereal', 'millet': 'Cereal', 'sorghum': 'Cereal',
+        
+        # Pulses/Legumes
+        'chickpea': 'Pulse', 'lentil': 'Pulse', 'pigeon pea': 'Pulse', 
+        'black gram': 'Pulse', 'green gram': 'Pulse', 'kidney beans': 'Pulse',
+        'mung bean': 'Pulse', 'moth bean': 'Pulse',
+        
+        # Oilseeds
+        'groundnut': 'Oilseed', 'peanut': 'Oilseed', 'soybean': 'Oilseed',
+        'sunflower': 'Oilseed', 'mustard': 'Oilseed', 'sesame': 'Oilseed',
+        'rapeseed': 'Oilseed',
+        
+        # Vegetables
+        'tomato': 'Vegetable', 'potato': 'Vegetable', 'onion': 'Vegetable',
+        'cabbage': 'Vegetable', 'cauliflower': 'Vegetable', 'brinjal': 'Vegetable',
+        'okra': 'Vegetable', 'pumpkin': 'Vegetable',
+        
+        # Cash crops
+        'cotton': 'Cash Crop', 'sugarcane': 'Cash Crop', 'jute': 'Cash Crop',
+        'tobacco': 'Cash Crop', 'tea': 'Cash Crop', 'coffee': 'Cash Crop'
+    }
+    
+    result = {}
+    for crop in crop_names:
+        result[crop] = categories.get(crop.lower(), 'Other')
+    
+    return result
+
+
+def get_diversity_benefits(level):
+    """Return specific benefits based on diversity level"""
+    benefits = {
+        "LOW": [
+            "High risk of total crop failure",
+            "Soil nutrient depletion from monoculture",
+            "Limited nutrition diversity in diet"
+        ],
+        "MEDIUM": [
+            "Reduced risk compared to single crop",
+            "Some soil health benefits",
+            "Moderate income stability"
+        ],
+        "HIGH": [
+            "Reduced risk of total crop failure",
+            "Improved soil health through varied root systems",
+            "Better nutrition diversity for family",
+            "Income stability from multiple sources",
+            "Natural pest management through diversity"
+        ]
+    }
+    return benefits.get(level, [])
+
+
 def recommend_crop(input_data):
     limit = input_data.get("limit", 3)
 
@@ -36,11 +142,16 @@ def recommend_crop(input_data):
     top_matches = filtered.sort_values("npk_score").head(15)
 
     crops = top_matches["Crop Type"].value_counts().head(limit)
+    recommended_crops_list = crops.index.tolist()
+    
+    # Calculate diversity score
+    diversity_analysis = calculate_diversity_score(recommended_crops_list)
 
     return {
-        "recommended_crops": crops.index.tolist(),
+        "recommended_crops": recommended_crops_list,
         "shown": limit,
-        "note": "Showing best-matched crops based on soil, climate, and nutrients"
+        "note": "Showing best-matched crops based on soil, climate, and nutrients",
+        "diversity_score": diversity_analysis
     }
 
 
